@@ -300,14 +300,6 @@ void bbFlushJoy() {
 	for (int k = 0; k < gx_joysticks.size(); ++k) gx_joysticks[k]->flush();
 }
 
-void  bbEnableDirectInput(int enable) {
-	gx_runtime->enableDirectInput(!!enable);
-}
-
-int  bbDirectInputEnabled() {
-	return gx_runtime->directInputEnabled();
-}
-
 void input_link(void (*rtSym)(const char* sym, void* pc)) {
 	rtSym("%KeyDown%key", bbKeyDown);
 	rtSym("%KeyHit%key", bbKeyHit);
@@ -357,7 +349,4 @@ void input_link(void (*rtSym)(const char* sym, void* pc)) {
 	rtSym("JoyVibrate%port#left#right", bbJoyVibrate);
 	rtSym("StopJoyVibrate%port", bbStopJoyVibrate);
 	rtSym("FlushJoy", bbFlushJoy);
-
-	rtSym("EnableDirectInput%enable", bbEnableDirectInput);
-	rtSym("%DirectInputEnabled", bbDirectInputEnabled);
 }

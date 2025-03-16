@@ -1,9 +1,6 @@
 #ifndef GXINPUT_H
 #define GXINPUT_H
 
-#define DIRECTINPUT_VERSION 0x0800
-
-#include <dinput.h>
 #include <xinput.h>
 
 #include "gxdevice.h"
@@ -31,9 +28,8 @@ public:
 class gxInput {
 public:
 	gxRuntime* runtime;
-	IDirectInput8* dirInput;
 
-	gxInput(gxRuntime* runtime, IDirectInput8* di);
+	gxInput(gxRuntime* runtime);
 	~gxInput();
 
 	void reset();

@@ -141,9 +141,6 @@ public:
 
 	void calculateDPI();
 
-	void enableDirectInput(bool use);
-	int  directInputEnabled() { return use_di; }
-
 	int callDll(const std::string& dll, const std::string& func, const void* in, int in_sz, void* out, int out_sz);
 
 	OSVERSIONINFO osinfo;

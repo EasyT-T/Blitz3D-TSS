@@ -118,7 +118,7 @@ typedef void (WINAPI* RtlGetVersionFunc) (OSVERSIONINFO*);
 
 gxRuntime::gxRuntime(HINSTANCE hi, const std::string& cl, HWND hw) :
 	hinst(hi), cmd_line(cl), hwnd(hw), curr_driver(0), enum_all(false),
-	pointer_visible(true), input(0), graphics(0), fileSystem(0), use_di(false) {
+	pointer_visible(true), input(0), graphics(0), fileSystem(0) {
 
 	CoInitialize(0);
 
@@ -187,19 +187,12 @@ void gxRuntime::resetInput() {
 
 void gxRuntime::acquireInput() {
 	if(!input) return;
-	if(gfx_mode == GMODE_EXCLUSIVE) {
-		if(use_di) {
-			use_di = input->acquire();
-		}
-		else {
-		}
-	}
+
 	input->reset();
 }
 
 void gxRuntime::unacquireInput() {
 	if(!input) return;
-	if(gfx_mode == GMODE_EXCLUSIVE && use_di) input->unacquire();
 	input->reset();
 }
 
@@ -329,7 +322,6 @@ void gxRuntime::moveMouse(int x, int y) {
 			p.x = x; p.y = y; ClientToScreen(hwnd, &p); x = p.x; y = p.y;
 			break;
 		case GMODE_EXCLUSIVE:
-			if(use_di) return;
 			break;
 		default:
 			return;
@@ -399,11 +391,6 @@ LRESULT gxRuntime::windowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 	if(!input || suspended) return DefWindowProc(hwnd, msg, wparam, lparam);
 
-	if(gfx_mode == GMODE_EXCLUSIVE && use_di) {
-		use_di = input->acquire();
-		return DefWindowProc(hwnd, msg, wparam, lparam);
-	}
-
 	static const int MK_ALLBUTTONS = MK_LBUTTON | MK_RBUTTON | MK_MBUTTON;
 
 	//handle input messages
@@ -444,7 +431,7 @@ LRESULT gxRuntime::windowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 			break;
 		case WM_MOUSEMOVE:
 			if(!graphics) break;
-			if(gfx_mode == GMODE_EXCLUSIVE && !use_di) {
+			if(gfx_mode == GMODE_EXCLUSIVE) {
 				POINT p; GetCursorPos(&p);
 				input->wm_mousemove(p.x, p.y);
 			}
@@ -714,14 +701,9 @@ void gxRuntime::setPointerVisible(bool vis) {
 gxInput* gxRuntime::openInput(int flags) {
 	if(input) return 0;
 
-	IDirectInput8* di;
-	if(DirectInput8Create(hinst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&di, 0) >= 0) {
-		input = new gxInput(this, di);
-		acquireInput();
-	}
-	else {
-		runtime->debugLog("Failed to create DirectInput.");
-	}
+	input = new gxInput(this);
+	acquireInput();
+
 	return input;
 }
 
@@ -1273,9 +1255,6 @@ std::string gxRuntime::systemProperty(const std::string& p) {
 	else if(t == "directdraw7") {
 		if(graphics) return itoa((int)graphics->dirDraw);
 	}
-	else if(t == "directinput7") {
-		if(input) return itoa((int)input->dirInput);
-	}
 	else if(t == "blitzversion") {
 		return itoa((VERSION & 0xffff) / 1000) + "." + itoa((VERSION & 0xffff) % 1000);
 	}
@@ -1288,15 +1267,6 @@ void gxRuntime::calculateDPI() {
 		this->scale_x = GetDeviceCaps(hdc, LOGPIXELSX) / 96.0f;
 		this->scale_y = GetDeviceCaps(hdc, LOGPIXELSY) / 96.0f;
 		ReleaseDC(GetDesktopWindow(), hdc);
-	}
-}
-
-void gxRuntime::enableDirectInput(bool enable) {
-	if(use_di = enable) {
-		acquireInput();
-	}
-	else {
-		unacquireInput();
 	}
 }
 
